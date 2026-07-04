@@ -28,6 +28,7 @@ export default function Login() {
         onSuccess: (res) => {
           if (res.sessionToken) {
             localStorage.setItem("sessionToken", res.sessionToken);
+            localStorage.setItem("userEmail", res.email);
             setLocation("/dashboard");
           }
         },

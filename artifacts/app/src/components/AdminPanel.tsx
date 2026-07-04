@@ -6,11 +6,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useAdminLogin, useGetAdminUsers, useBanUser, useUnbanUser, useLogout } from "@workspace/api-client-react";
 import { LogOut, Ban, CheckCircle, Key, Users, ShieldOff, RefreshCw } from "lucide-react";
 
+const OWNER_EMAIL = "omareltweel012@gmail.com";
+
 export default function AdminPanel() {
   const [isOpen, setIsOpen] = useState(false);
   const [password, setPassword] = useState("");
   const [isAdmin, setIsAdmin] = useState(!!localStorage.getItem("adminToken"));
   const [, setLocation] = useLocation();
+
+  const currentEmail = localStorage.getItem("userEmail") ?? "";
+  const isOwner = currentEmail.toLowerCase() === OWNER_EMAIL.toLowerCase();
 
   const adminLogin = useAdminLogin();
   const { data: users, refetch, isFetching } = useGetAdminUsers({
@@ -59,13 +64,15 @@ export default function AdminPanel() {
 
   return (
     <>
-      <button
-        data-testid="button-admin-key"
-        onClick={() => setIsOpen(true)}
-        className="absolute top-4 left-4 z-50 p-2 text-yellow-500 hover:text-yellow-400 transition-colors"
-      >
-        <Key size={24} />
-      </button>
+      {isOwner && (
+        <button
+          data-testid="button-admin-key"
+          onClick={() => setIsOpen(true)}
+          className="absolute top-4 left-4 z-50 p-2 text-yellow-500 hover:text-yellow-400 transition-colors"
+        >
+          <Key size={24} />
+        </button>
+      )}
 
       <div className="absolute top-4 right-4 z-50">
         <button
