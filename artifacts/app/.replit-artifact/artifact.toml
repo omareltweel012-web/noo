@@ -1,6 +1,6 @@
 kind = "web"
 previewPath = "/"
-title = "موقع تسجيل الدخول"
+title = "خدمات المجال"
 version = "1.0.0"
 id = "artifacts/app"
 router = "path"
