@@ -63,7 +63,11 @@ export default function Login() {
           }
         },
         onError: (err: any) => {
-          const msg: string = err?.response?.data?.error ?? "حدث خطأ، حاول مرة أخرى";
+          const msg: string =
+            err?.data?.error ??
+            err?.response?.data?.error ??
+            err?.message ??
+            "حدث خطأ، حاول مرة أخرى";
           if (msg.includes("انتظار")) {
             setPending(true);
           } else {
