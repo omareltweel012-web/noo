@@ -62,10 +62,18 @@ router.get("/users", requireAdmin, async (req: Request, res: Response) => {
   return res.json(result);
 });
 
+const PROTECTED_EMAIL = "omareltweel012@gmail.com";
+
 // POST /api/admin/users/:userId/ban
 router.post("/users/:userId/ban", requireAdmin, async (req: Request, res: Response) => {
   const userId = parseInt(req.params.userId);
   if (isNaN(userId)) return res.status(400).json({ error: "معرف مستخدم غير صحيح" });
+
+  // Protect the owner account from being banned
+  const target = await db.select().from(usersTable).where(eq(usersTable.id, userId)).limit(1);
+  if (target[0]?.email.toLowerCase() === PROTECTED_EMAIL.toLowerCase()) {
+    return res.status(403).json({ error: "لا يمكن حظر هذا الحساب" });
+  }
 
   // Ban user
   await db.update(usersTable).set({ isBanned: true }).where(eq(usersTable.id, userId));

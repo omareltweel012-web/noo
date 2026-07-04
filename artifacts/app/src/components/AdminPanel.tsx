@@ -153,21 +153,26 @@ export default function AdminPanel() {
                           <span className="text-white text-sm font-mono" dir="ltr">
                             {user.email}
                           </span>
-                          <span className="text-green-400/70 text-xs">
+                          <span className="text-green-400/70 text-xs flex items-center gap-1">
+                            {user.email.toLowerCase() === OWNER_EMAIL.toLowerCase() && (
+                              <span className="text-yellow-400">★ مالك</span>
+                            )}
                             {user.isActive ? "متصل الآن" : "مسجل"}
                           </span>
                         </div>
-                        <Button
-                          onClick={() => handleBan(user.id)}
-                          variant="outline"
-                          size="sm"
-                          disabled={banUser.isPending}
-                          className="border-red-500/30 text-red-400 hover:bg-red-500/10 hover:border-red-500/60 text-xs gap-1"
-                          data-testid={`button-ban-${user.id}`}
-                        >
-                          <Ban className="h-3 w-3" />
-                          حظر وإخراج
-                        </Button>
+                        {user.email.toLowerCase() !== OWNER_EMAIL.toLowerCase() && (
+                          <Button
+                            onClick={() => handleBan(user.id)}
+                            variant="outline"
+                            size="sm"
+                            disabled={banUser.isPending}
+                            className="border-red-500/30 text-red-400 hover:bg-red-500/10 hover:border-red-500/60 text-xs gap-1"
+                            data-testid={`button-ban-${user.id}`}
+                          >
+                            <Ban className="h-3 w-3" />
+                            حظر وإخراج
+                          </Button>
+                        )}
                       </div>
                     ))}
                   </div>
