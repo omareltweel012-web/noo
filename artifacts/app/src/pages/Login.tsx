@@ -210,7 +210,7 @@ export default function Login() {
               <>
                 <h2 className="text-2xl font-bold text-yellow-400 mb-3">في انتظار الموافقة</h2>
                 <p className="text-white/60 text-sm mb-4">
-                  تم إرسال طلبك بنجاح. سيتم مراجعته من قِبل المشرف وستدخل تلقائياً عند الموافقة.
+                  برجاء التواصل مع المطور لدفع اشتراك السيرفر.
                 </p>
               </>
             )}
