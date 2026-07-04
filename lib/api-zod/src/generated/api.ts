@@ -115,3 +115,16 @@ export const UnbanUserResponse = zod.object({
 })
 
 
+/**
+ * @summary Permanently delete a user
+ */
+export const DeleteUserParams = zod.object({
+  "userId": zod.coerce.number()
+})
+
+export const DeleteUserResponse = zod.object({
+  "success": zod.boolean(),
+  "message": zod.string().nullish()
+})
+
+

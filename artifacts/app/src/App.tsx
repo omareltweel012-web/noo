@@ -10,6 +10,7 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Transfer from "./pages/Transfer";
 import Tax from "./pages/Tax";
+import Admin from "./pages/Admin";
 
 const queryClient = new QueryClient();
 
@@ -47,6 +48,7 @@ function Router() {
       <Route path="/dashboard"><ProtectedRoute component={Dashboard} /></Route>
       <Route path="/transfer"><ProtectedRoute component={Transfer} /></Route>
       <Route path="/tax"><ProtectedRoute component={Tax} /></Route>
+      <Route path="/admin"><ProtectedRoute component={Admin} /></Route>
       <Route component={NotFound} />
     </Switch>
   );

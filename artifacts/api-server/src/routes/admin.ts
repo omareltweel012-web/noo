@@ -126,4 +126,19 @@ router.post("/users/:userId/unban", requireAdmin, async (req: Request, res: Resp
   return res.json({ success: true, message: "تم رفع الحظر" });
 });
 
+// DELETE /api/admin/users/:userId
+router.delete("/users/:userId", requireAdmin, async (req: Request, res: Response) => {
+  const userId = parseInt(req.params.userId);
+  if (isNaN(userId)) return res.status(400).json({ error: "معرف مستخدم غير صحيح" });
+
+  const target = await db.select().from(usersTable).where(eq(usersTable.id, userId)).limit(1);
+  if (target[0]?.email.toLowerCase() === OWNER_EMAIL.toLowerCase()) {
+    return res.status(403).json({ error: "لا يمكن حذف هذا الحساب" });
+  }
+
+  await db.delete(sessionsTable).where(eq(sessionsTable.userId, userId));
+  await db.delete(usersTable).where(eq(usersTable.id, userId));
+  return res.json({ success: true, message: "تم الحذف نهائياً" });
+});
+
 export { router as adminRouter };
