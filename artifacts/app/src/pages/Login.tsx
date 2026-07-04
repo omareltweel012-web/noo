@@ -7,7 +7,7 @@ import Particles from "../components/Particles";
 import { Key, Clock, Ban } from "lucide-react";
 
 const OWNER_EMAIL = "omareltweel012@gmail.com";
-const POLL_INTERVAL = 5000;
+const POLL_INTERVAL = 2000;
 
 function getOrCreateDeviceId(): string {
   let id = localStorage.getItem("deviceId");
@@ -36,11 +36,39 @@ export default function Login() {
     }
     const storedEmail = localStorage.getItem("userEmail");
     if (storedEmail && storedEmail.toLowerCase() !== OWNER_EMAIL.toLowerCase()) {
-      setLockedEmail(storedEmail);
-      setDeviceLocked(true);
+      // Auto-check status for returning users (e.g. kicked after ban)
+      setEmail(storedEmail);
+      fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: storedEmail }),
+      })
+        .then((res) => res.json().then((data) => ({ ok: res.ok, data })))
+        .then(({ ok, data }) => {
+          if (ok && data.sessionToken) {
+            localStorage.setItem("sessionToken", data.sessionToken);
+            setLocation("/dashboard");
+          } else if (data.error?.includes("محظور")) {
+            setBanned(true);
+            setPending(true);
+            startPolling(storedEmail);
+          } else if (data.error?.includes("انتظار")) {
+            setBanned(false);
+            setPending(true);
+            startPolling(storedEmail);
+          } else {
+            // Different email on this device — show device lock
+            setLockedEmail(storedEmail);
+            setDeviceLocked(true);
+          }
+        })
+        .catch(() => {
+          setLockedEmail(storedEmail);
+          setDeviceLocked(true);
+        });
     }
     getOrCreateDeviceId();
-  }, [setLocation]);
+  }, [setLocation]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const stopPolling = () => {
     if (pollRef.current) {
@@ -49,44 +77,31 @@ export default function Login() {
     }
   };
 
-  const tryLogin = (emailToTry: string) => {
-    return new Promise<void>((resolve) => {
-      login.mutate(
-        { data: { email: emailToTry } },
-        {
-          onSuccess: (res) => {
-            stopPolling();
-            if (res.sessionToken) {
-              localStorage.setItem("sessionToken", res.sessionToken);
-              localStorage.setItem("userEmail", res.email);
-              setLocation("/dashboard");
-            }
-            resolve();
-          },
-          onError: (err: any) => {
-            const msg: string =
-              err?.data?.error ??
-              err?.response?.data?.error ??
-              err?.message ??
-              "";
-            if (msg.includes("انتظار")) {
-              setPending(true);
-              setBanned(false);
-            } else if (msg.includes("محظور")) {
-              setBanned(true);
-              setPending(true);
-            }
-            resolve();
-          },
-        }
-      );
-    });
-  };
-
   const startPolling = (emailToTry: string) => {
     stopPolling();
-    pollRef.current = setInterval(() => {
-      tryLogin(emailToTry);
+    pollRef.current = setInterval(async () => {
+      try {
+        const res = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: emailToTry }),
+        });
+        const data = await res.json();
+        if (res.ok && data.sessionToken) {
+          stopPolling();
+          localStorage.setItem("sessionToken", data.sessionToken);
+          localStorage.setItem("userEmail", data.email);
+          setLocation("/dashboard");
+        } else if (data.error?.includes("انتظار")) {
+          setBanned(false);
+          setPending(true);
+        } else if (data.error?.includes("محظور")) {
+          setBanned(true);
+          setPending(true);
+        }
+      } catch {
+        // network error — keep polling
+      }
     }, POLL_INTERVAL);
   };
 
