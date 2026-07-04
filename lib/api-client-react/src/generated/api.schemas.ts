@@ -11,6 +11,7 @@ export interface HealthStatus {
 
 export interface EmailInput {
   email: string;
+  deviceId?: string;
 }
 
 export interface AdminCredentials {
@@ -30,6 +31,7 @@ export interface UserRecord {
   isActive: boolean;
   status: string;
   createdAt: string;
+  lockedDeviceId?: string | null;
 }
 
 export interface SuccessResponse {

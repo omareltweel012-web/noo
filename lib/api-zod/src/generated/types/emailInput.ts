@@ -8,4 +8,5 @@
 
 export interface EmailInput {
   email: string;
+  deviceId?: string;
 }

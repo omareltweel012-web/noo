@@ -7,6 +7,7 @@ export const usersTable = pgTable("users", {
   email: text("email").notNull().unique(),
   isBanned: boolean("is_banned").notNull().default(false),
   status: text("status").notNull().default("pending"),
+  lockedDeviceId: text("locked_device_id"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

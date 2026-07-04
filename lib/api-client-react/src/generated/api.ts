@@ -707,6 +707,76 @@ export const useUnbanUser = <TError = ErrorType<unknown>,
       return useMutation(getUnbanUserMutationOptions(options));
     }
 
+export const getResetUserDeviceUrl = (userId: number,) => {
+
+
+
+
+  return `/api/admin/users/${userId}/reset-device`
+}
+
+/**
+ * @summary Unlock device binding so user can login from a new device
+ */
+export const resetUserDevice = async (userId: number, options?: RequestInit): Promise<SuccessResponse> => {
+
+  return customFetch<SuccessResponse>(getResetUserDeviceUrl(userId),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getResetUserDeviceMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof resetUserDevice>>, TError,{userId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof resetUserDevice>>, TError,{userId: number}, TContext> => {
+
+const mutationKey = ['resetUserDevice'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof resetUserDevice>>, {userId: number}> = (props) => {
+          const {userId} = props ?? {};
+
+          return  resetUserDevice(userId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ResetUserDeviceMutationResult = NonNullable<Awaited<ReturnType<typeof resetUserDevice>>>
+
+    export type ResetUserDeviceMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Unlock device binding so user can login from a new device
+ */
+export const useResetUserDevice = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof resetUserDevice>>, TError,{userId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof resetUserDevice>>,
+        TError,
+        {userId: number},
+        TContext
+      > => {
+      return useMutation(getResetUserDeviceMutationOptions(options));
+    }
+
 export const getDeleteUserUrl = (userId: number,) => {
 
 

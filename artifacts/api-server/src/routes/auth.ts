@@ -30,7 +30,7 @@ async function getUserFromToken(token: string) {
 
 // POST /api/auth/login
 router.post("/login", async (req: Request, res: Response) => {
-  const { email } = req.body as { email?: string };
+  const { email, deviceId } = req.body as { email?: string; deviceId?: string };
   if (!email || !email.includes("@")) {
     return res.status(400).json({ error: "البريد الإلكتروني غير صحيح" });
   }
@@ -53,6 +53,16 @@ router.post("/login", async (req: Request, res: Response) => {
     if (user.status === "pending") {
       return res.status(403).json({ error: "طلبك في انتظار موافقة المشرف" });
     }
+    // Device lock check (skip for owner)
+    if (!isOwner && deviceId) {
+      if (user.lockedDeviceId && user.lockedDeviceId !== deviceId) {
+        return res.status(403).json({ error: "هذا البريد مرتبط بجهاز آخر — تواصل مع الدعم لفك الارتباط" });
+      }
+      // First login — lock the device
+      if (!user.lockedDeviceId) {
+        await db.update(usersTable).set({ lockedDeviceId: deviceId }).where(eq(usersTable.id, user.id));
+      }
+    }
   } else {
     // New user — owner is auto-approved, everyone else is pending
     const [newUser] = await db
@@ -61,6 +71,7 @@ router.post("/login", async (req: Request, res: Response) => {
         email: normalizedEmail,
         status: isOwner ? "approved" : "pending",
         isBanned: false,
+        lockedDeviceId: null,
       })
       .returning();
     user = newUser;

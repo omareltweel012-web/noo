@@ -20,7 +20,8 @@ export const HealthCheckResponse = zod.object({
  * @summary Login with email
  */
 export const LoginBody = zod.object({
-  "email": zod.string().email()
+  "email": zod.string().email(),
+  "deviceId": zod.string().optional()
 })
 
 export const LoginResponse = zod.object({
@@ -71,7 +72,8 @@ export const GetAdminUsersResponseItem = zod.object({
   "isBanned": zod.boolean(),
   "isActive": zod.boolean(),
   "status": zod.string(),
-  "createdAt": zod.string()
+  "createdAt": zod.string(),
+  "lockedDeviceId": zod.string().nullish()
 })
 export const GetAdminUsersResponse = zod.array(GetAdminUsersResponseItem)
 
@@ -110,6 +112,19 @@ export const UnbanUserParams = zod.object({
 })
 
 export const UnbanUserResponse = zod.object({
+  "success": zod.boolean(),
+  "message": zod.string().nullish()
+})
+
+
+/**
+ * @summary Unlock device binding so user can login from a new device
+ */
+export const ResetUserDeviceParams = zod.object({
+  "userId": zod.coerce.number()
+})
+
+export const ResetUserDeviceResponse = zod.object({
   "success": zod.boolean(),
   "message": zod.string().nullish()
 })

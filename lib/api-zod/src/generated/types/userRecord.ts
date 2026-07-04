@@ -13,4 +13,5 @@ export interface UserRecord {
   isActive: boolean;
   status: string;
   createdAt: string;
+  lockedDeviceId?: string | null;
 }

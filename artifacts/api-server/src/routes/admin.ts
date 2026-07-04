@@ -68,6 +68,7 @@ router.get("/users", requireAdmin, async (req: Request, res: Response) => {
       email: usersTable.email,
       isBanned: usersTable.isBanned,
       status: usersTable.status,
+      lockedDeviceId: usersTable.lockedDeviceId,
       createdAt: usersTable.createdAt,
     })
     .from(usersTable)
@@ -86,6 +87,7 @@ router.get("/users", requireAdmin, async (req: Request, res: Response) => {
     isBanned: u.isBanned,
     status: u.status,
     isActive: activeUserIds.has(u.id),
+    lockedDeviceId: u.lockedDeviceId ?? null,
     createdAt: u.createdAt.toISOString(),
   }));
 
@@ -124,6 +126,15 @@ router.post("/users/:userId/unban", requireAdmin, async (req: Request, res: Resp
 
   await db.update(usersTable).set({ isBanned: false, status: "approved" }).where(eq(usersTable.id, userId));
   return res.json({ success: true, message: "تم رفع الحظر" });
+});
+
+// POST /api/admin/users/:userId/reset-device
+router.post("/users/:userId/reset-device", requireAdmin, async (req: Request, res: Response) => {
+  const userId = parseInt(req.params.userId);
+  if (isNaN(userId)) return res.status(400).json({ error: "معرف مستخدم غير صحيح" });
+
+  await db.update(usersTable).set({ lockedDeviceId: null }).where(eq(usersTable.id, userId));
+  return res.json({ success: true, message: "تم فك ارتباط الجهاز" });
 });
 
 // DELETE /api/admin/users/:userId

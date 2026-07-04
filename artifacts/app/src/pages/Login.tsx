@@ -48,23 +48,24 @@ export default function Login() {
   useEffect(() => {
     if (localStorage.getItem("sessionToken")) { setLocation("/dashboard"); return; }
     const stored = localStorage.getItem("userEmail");
+    const devId = getOrCreateDeviceId();
     if (stored && stored.toLowerCase() !== OWNER_EMAIL.toLowerCase()) {
       setEmail(stored);
       fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: stored }),
+        body: JSON.stringify({ email: stored, deviceId: devId }),
       })
         .then((r) => r.json().then((d) => ({ ok: r.ok, d })))
         .then(({ ok, d }) => {
           if (ok && d.sessionToken) { localStorage.setItem("sessionToken", d.sessionToken); setLocation("/dashboard"); }
           else if (d.error?.includes("محظور")) { setBanned(true); setPending(true); startPolling(stored); }
           else if (d.error?.includes("انتظار")) { setBanned(false); setPending(true); startPolling(stored); }
+          else if (d.error?.includes("جهاز آخر")) { setErrorMsg(d.error); }
           else { setLockedEmail(stored); setDeviceLocked(true); }
         })
         .catch(() => { setLockedEmail(stored); setDeviceLocked(true); });
     }
-    getOrCreateDeviceId();
   }, [setLocation]); // eslint-disable-line
 
   const stopPolling = () => { if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; } };
@@ -72,7 +73,8 @@ export default function Login() {
     stopPolling();
     pollRef.current = setInterval(async () => {
       try {
-        const r = await fetch("/api/auth/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: emailToTry }) });
+        const devId = getOrCreateDeviceId();
+        const r = await fetch("/api/auth/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: emailToTry, deviceId: devId }) });
         const d = await r.json();
         if (r.ok && d.sessionToken) { stopPolling(); localStorage.setItem("sessionToken", d.sessionToken); localStorage.setItem("userEmail", d.email); setLocation("/dashboard"); }
         else if (d.error?.includes("انتظار")) { setBanned(false); setPending(true); }
@@ -89,7 +91,8 @@ export default function Login() {
     const isOwner = email.toLowerCase() === OWNER_EMAIL.toLowerCase();
     const stored = localStorage.getItem("userEmail");
     if (!isOwner && stored && stored.toLowerCase() !== email.toLowerCase()) { setDeviceLocked(true); setLockedEmail(stored); return; }
-    login.mutate({ data: { email } }, {
+    const deviceId = getOrCreateDeviceId();
+    login.mutate({ data: { email, deviceId } }, {
       onSuccess: (res) => {
         stopPolling();
         if (res.sessionToken) { localStorage.setItem("sessionToken", res.sessionToken); localStorage.setItem("userEmail", res.email); setLocation("/dashboard"); }

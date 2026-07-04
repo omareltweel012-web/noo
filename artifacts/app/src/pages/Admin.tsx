@@ -4,12 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   useAdminLogin, useGetAdminUsers, useBanUser, useUnbanUser,
-  useApproveUser, useDeleteUser,
+  useApproveUser, useDeleteUser, useResetUserDevice,
 } from "@workspace/api-client-react";
 import Particles from "../components/Particles";
 import {
   Key, LogOut, Ban, CheckCircle, Clock, Users, ShieldOff,
-  Trash2, RefreshCw, ArrowRight,
+  Trash2, RefreshCw, ArrowRight, Smartphone,
 } from "lucide-react";
 
 const OWNER_EMAIL = "omareltweel012@gmail.com";
@@ -35,7 +35,8 @@ export default function Admin() {
   const approveUser = useApproveUser();
   const banUser     = useBanUser();
   const unbanUser   = useUnbanUser();
-  const deleteUser  = useDeleteUser();
+  const deleteUser      = useDeleteUser();
+  const resetDevice     = useResetUserDevice();
 
   const pendingUsers = users?.filter((u) => u.status === "pending" && !u.isBanned) ?? [];
   const activeUsers  = users?.filter((u) => u.status === "approved" && !u.isBanned) ?? [];
@@ -208,11 +209,21 @@ export default function Admin() {
                       </p>
                     </div>
                     {u.email.toLowerCase() !== OWNER_EMAIL.toLowerCase() && (
-                      <Button onClick={() => { banUser.mutate({ userId: u.id }, { onSuccess: () => refetch() }); }}
-                        size="sm" disabled={banUser.isPending}
-                        className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border-0 text-xs gap-1 h-8">
-                        <Ban className="h-3 w-3" /> حظر وإخراج
-                      </Button>
+                      <div className="flex gap-2">
+                        {u.lockedDeviceId && (
+                          <Button onClick={() => { resetDevice.mutate({ userId: u.id }, { onSuccess: () => refetch() }); }}
+                            size="sm" disabled={resetDevice.isPending}
+                            className="bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border-0 text-xs gap-1 h-8"
+                            title="فك ارتباط الجهاز">
+                            <Smartphone className="h-3 w-3" /> فك الجهاز
+                          </Button>
+                        )}
+                        <Button onClick={() => { banUser.mutate({ userId: u.id }, { onSuccess: () => refetch() }); }}
+                          size="sm" disabled={banUser.isPending}
+                          className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border-0 text-xs gap-1 h-8">
+                          <Ban className="h-3 w-3" /> حظر وإخراج
+                        </Button>
+                      </div>
                     )}
                   </div>
                 ))}
