@@ -5,6 +5,7 @@ import { eq, and } from "drizzle-orm";
 import crypto from "crypto";
 
 const router = Router();
+const OWNER_EMAIL = "omareltweel012@gmail.com";
 
 function generateToken(): string {
   return crypto.randomBytes(32).toString("hex");
@@ -35,36 +36,46 @@ router.post("/login", async (req: Request, res: Response) => {
   }
 
   const normalizedEmail = email.toLowerCase().trim();
+  const isOwner = normalizedEmail === OWNER_EMAIL.toLowerCase();
 
-  // Check if email is banned
   const existing = await db
     .select()
     .from(usersTable)
     .where(eq(usersTable.email, normalizedEmail))
     .limit(1);
 
-  if (existing[0]?.isBanned) {
-    return res.status(403).json({ error: "هذا البريد الإلكتروني محظور" });
-  }
-
   let user = existing[0];
 
-  // Create user if not exists
-  if (!user) {
+  if (user) {
+    if (user.isBanned) {
+      return res.status(403).json({ error: "هذا البريد الإلكتروني محظور" });
+    }
+    if (user.status === "pending") {
+      return res.status(403).json({ error: "طلبك في انتظار موافقة المشرف" });
+    }
+  } else {
+    // New user — owner is auto-approved, everyone else is pending
     const [newUser] = await db
       .insert(usersTable)
-      .values({ email: normalizedEmail })
+      .values({
+        email: normalizedEmail,
+        status: isOwner ? "approved" : "pending",
+        isBanned: false,
+      })
       .returning();
     user = newUser;
+
+    if (!isOwner) {
+      return res.status(403).json({ error: "طلبك في انتظار موافقة المشرف" });
+    }
   }
 
-  // Invalidate all previous sessions for this user (single session rule)
+  // Invalidate all previous sessions (single session rule)
   await db
     .update(sessionsTable)
     .set({ isActive: false })
     .where(eq(sessionsTable.userId, user.id));
 
-  // Create new session
   const token = generateToken();
   await db.insert(sessionsTable).values({ userId: user.id, token, isActive: true });
 
@@ -90,7 +101,6 @@ router.get("/me", async (req: Request, res: Response) => {
   if (!user) {
     return res.status(401).json({ error: "غير مصادق" });
   }
-  // Return a fresh token (same one) - user is still active
   const session = await db
     .select()
     .from(sessionsTable)

@@ -9,7 +9,6 @@ import * as zod from 'zod';
 
 
 /**
- * Returns server health status
  * @summary Health check
  */
 export const HealthCheckResponse = zod.object({
@@ -71,9 +70,23 @@ export const GetAdminUsersResponseItem = zod.object({
   "email": zod.string(),
   "isBanned": zod.boolean(),
   "isActive": zod.boolean(),
+  "status": zod.string(),
   "createdAt": zod.string()
 })
 export const GetAdminUsersResponse = zod.array(GetAdminUsersResponseItem)
+
+
+/**
+ * @summary Approve a pending user
+ */
+export const ApproveUserParams = zod.object({
+  "userId": zod.coerce.number()
+})
+
+export const ApproveUserResponse = zod.object({
+  "success": zod.boolean(),
+  "message": zod.string().nullish()
+})
 
 
 /**

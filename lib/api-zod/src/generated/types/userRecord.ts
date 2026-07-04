@@ -11,5 +11,6 @@ export interface UserRecord {
   email: string;
   isBanned: boolean;
   isActive: boolean;
+  status: string;
   createdAt: string;
 }

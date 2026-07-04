@@ -65,7 +65,6 @@ export const getHealthCheckUrl = () => {
 }
 
 /**
- * Returns server health status
  * @summary Health check
  */
 export const healthCheck = async ( options?: RequestInit): Promise<HealthStatus> => {
@@ -497,6 +496,76 @@ export function useGetAdminUsers<TData = Awaited<ReturnType<typeof getAdminUsers
 
 
 
+
+export const getApproveUserUrl = (userId: number,) => {
+
+
+
+
+  return `/api/admin/users/${userId}/approve`
+}
+
+/**
+ * @summary Approve a pending user
+ */
+export const approveUser = async (userId: number, options?: RequestInit): Promise<SuccessResponse> => {
+
+  return customFetch<SuccessResponse>(getApproveUserUrl(userId),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getApproveUserMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof approveUser>>, TError,{userId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof approveUser>>, TError,{userId: number}, TContext> => {
+
+const mutationKey = ['approveUser'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof approveUser>>, {userId: number}> = (props) => {
+          const {userId} = props ?? {};
+
+          return  approveUser(userId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ApproveUserMutationResult = NonNullable<Awaited<ReturnType<typeof approveUser>>>
+
+    export type ApproveUserMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Approve a pending user
+ */
+export const useApproveUser = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof approveUser>>, TError,{userId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof approveUser>>,
+        TError,
+        {userId: number},
+        TContext
+      > => {
+      return useMutation(getApproveUserMutationOptions(options));
+    }
 
 export const getBanUserUrl = (userId: number,) => {
 

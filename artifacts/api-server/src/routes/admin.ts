@@ -23,37 +23,31 @@ async function getSessionEmail(token: string): Promise<string | null> {
 }
 
 // POST /api/admin/login
-// Only works if the request also carries a valid session token belonging to the owner
 router.post("/login", async (req: Request, res: Response) => {
   const { password } = req.body as { password?: string };
   if (password !== ADMIN_PASSWORD) {
     return res.status(401).json({ error: "كلمة السر غير صحيحة" });
   }
-
   const sessionToken = req.headers["x-session-token"] as string;
   const email = await getSessionEmail(sessionToken);
   if (!email || email.toLowerCase() !== OWNER_EMAIL.toLowerCase()) {
     return res.status(403).json({ error: "غير مصرح لهذا الحساب" });
   }
-
   const token = crypto.randomBytes(32).toString("hex");
   adminSessions.add(token);
   return res.json({ success: true, message: token });
 });
 
-// Middleware: valid admin token + session belongs to owner
 async function requireAdmin(req: Request, res: Response, next: Function) {
   const adminToken = req.headers["x-admin-token"] as string;
   if (!adminToken || !adminSessions.has(adminToken)) {
     return res.status(401).json({ error: "غير مصرح" });
   }
-
   const sessionToken = req.headers["x-session-token"] as string;
   const email = await getSessionEmail(sessionToken);
   if (!email || email.toLowerCase() !== OWNER_EMAIL.toLowerCase()) {
     return res.status(403).json({ error: "غير مصرح لهذا الحساب" });
   }
-
   next();
 }
 
@@ -64,6 +58,7 @@ router.get("/users", requireAdmin, async (req: Request, res: Response) => {
       id: usersTable.id,
       email: usersTable.email,
       isBanned: usersTable.isBanned,
+      status: usersTable.status,
       createdAt: usersTable.createdAt,
     })
     .from(usersTable)
@@ -80,11 +75,21 @@ router.get("/users", requireAdmin, async (req: Request, res: Response) => {
     id: u.id,
     email: u.email,
     isBanned: u.isBanned,
+    status: u.status,
     isActive: activeUserIds.has(u.id),
     createdAt: u.createdAt.toISOString(),
   }));
 
   return res.json(result);
+});
+
+// POST /api/admin/users/:userId/approve
+router.post("/users/:userId/approve", requireAdmin, async (req: Request, res: Response) => {
+  const userId = parseInt(req.params.userId);
+  if (isNaN(userId)) return res.status(400).json({ error: "معرف مستخدم غير صحيح" });
+
+  await db.update(usersTable).set({ status: "approved" }).where(eq(usersTable.id, userId));
+  return res.json({ success: true, message: "تمت الموافقة" });
 });
 
 // POST /api/admin/users/:userId/ban
@@ -108,8 +113,7 @@ router.post("/users/:userId/unban", requireAdmin, async (req: Request, res: Resp
   const userId = parseInt(req.params.userId);
   if (isNaN(userId)) return res.status(400).json({ error: "معرف مستخدم غير صحيح" });
 
-  await db.update(usersTable).set({ isBanned: false }).where(eq(usersTable.id, userId));
-
+  await db.update(usersTable).set({ isBanned: false, status: "approved" }).where(eq(usersTable.id, userId));
   return res.json({ success: true, message: "تم رفع الحظر" });
 });
 
