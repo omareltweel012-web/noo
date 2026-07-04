@@ -201,9 +201,9 @@ export default function Login() {
 
             {isBannedScreen ? (
               <>
-                <h2 className="text-2xl font-bold text-red-400 mb-3">تم رفع طلبك</h2>
+                <h2 className="text-2xl font-bold text-red-400 mb-3">الحساب موقوف</h2>
                 <p className="text-white/60 text-sm mb-4">
-                  تم رفض طلبك من قِبل المشرف. يتم التحقق تلقائياً كل 5 ثوانٍ في حال تغيّر القرار.
+                  برجاء التواصل مع الدعم ودفع اشتراك السيرفر لتفعيل حسابك.
                 </p>
               </>
             ) : (
