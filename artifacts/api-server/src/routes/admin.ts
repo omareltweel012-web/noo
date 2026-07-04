@@ -1,33 +1,59 @@
 import { Router, Request, Response } from "express";
+import crypto from "crypto";
 import { db } from "@workspace/db";
 import { usersTable, sessionsTable } from "@workspace/db";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 
 const router = Router();
 
 const ADMIN_PASSWORD = "OMar01018547595&";
+const OWNER_EMAIL = "omareltweel012@gmail.com";
 
-// Simple in-memory admin session store
 const adminSessions = new Set<string>();
-import crypto from "crypto";
+
+async function getSessionEmail(token: string): Promise<string | null> {
+  if (!token) return null;
+  const rows = await db
+    .select({ email: usersTable.email })
+    .from(sessionsTable)
+    .innerJoin(usersTable, eq(sessionsTable.userId, usersTable.id))
+    .where(and(eq(sessionsTable.token, token), eq(sessionsTable.isActive, true)))
+    .limit(1);
+  return rows[0]?.email ?? null;
+}
 
 // POST /api/admin/login
+// Only works if the request also carries a valid session token belonging to the owner
 router.post("/login", async (req: Request, res: Response) => {
   const { password } = req.body as { password?: string };
   if (password !== ADMIN_PASSWORD) {
     return res.status(401).json({ error: "كلمة السر غير صحيحة" });
   }
+
+  const sessionToken = req.headers["x-session-token"] as string;
+  const email = await getSessionEmail(sessionToken);
+  if (!email || email.toLowerCase() !== OWNER_EMAIL.toLowerCase()) {
+    return res.status(403).json({ error: "غير مصرح لهذا الحساب" });
+  }
+
   const token = crypto.randomBytes(32).toString("hex");
   adminSessions.add(token);
   return res.json({ success: true, message: token });
 });
 
-// Middleware to check admin auth
-function requireAdmin(req: Request, res: Response, next: Function) {
-  const token = req.headers["x-admin-token"] as string;
-  if (!token || !adminSessions.has(token)) {
+// Middleware: valid admin token + session belongs to owner
+async function requireAdmin(req: Request, res: Response, next: Function) {
+  const adminToken = req.headers["x-admin-token"] as string;
+  if (!adminToken || !adminSessions.has(adminToken)) {
     return res.status(401).json({ error: "غير مصرح" });
   }
+
+  const sessionToken = req.headers["x-session-token"] as string;
+  const email = await getSessionEmail(sessionToken);
+  if (!email || email.toLowerCase() !== OWNER_EMAIL.toLowerCase()) {
+    return res.status(403).json({ error: "غير مصرح لهذا الحساب" });
+  }
+
   next();
 }
 
@@ -43,7 +69,6 @@ router.get("/users", requireAdmin, async (req: Request, res: Response) => {
     .from(usersTable)
     .orderBy(desc(usersTable.createdAt));
 
-  // Check which users have active sessions
   const activeSessions = await db
     .select({ userId: sessionsTable.userId })
     .from(sessionsTable)
@@ -62,27 +87,18 @@ router.get("/users", requireAdmin, async (req: Request, res: Response) => {
   return res.json(result);
 });
 
-const PROTECTED_EMAIL = "omareltweel012@gmail.com";
-
 // POST /api/admin/users/:userId/ban
 router.post("/users/:userId/ban", requireAdmin, async (req: Request, res: Response) => {
   const userId = parseInt(req.params.userId);
   if (isNaN(userId)) return res.status(400).json({ error: "معرف مستخدم غير صحيح" });
 
-  // Protect the owner account from being banned
   const target = await db.select().from(usersTable).where(eq(usersTable.id, userId)).limit(1);
-  if (target[0]?.email.toLowerCase() === PROTECTED_EMAIL.toLowerCase()) {
+  if (target[0]?.email.toLowerCase() === OWNER_EMAIL.toLowerCase()) {
     return res.status(403).json({ error: "لا يمكن حظر هذا الحساب" });
   }
 
-  // Ban user
   await db.update(usersTable).set({ isBanned: true }).where(eq(usersTable.id, userId));
-
-  // Kick user - invalidate all their sessions
-  await db
-    .update(sessionsTable)
-    .set({ isActive: false })
-    .where(eq(sessionsTable.userId, userId));
+  await db.update(sessionsTable).set({ isActive: false }).where(eq(sessionsTable.userId, userId));
 
   return res.json({ success: true, message: "تم الحظر وتسجيل الخروج" });
 });
