@@ -22,7 +22,15 @@ export default function AdminPanel() {
 
   const adminLogin = useAdminLogin();
   const { data: users, refetch, isFetching } = useGetAdminUsers({
-    query: { enabled: isAdmin, refetchInterval: isAdmin ? 10000 : false }
+    query: {
+      enabled: isAdmin,
+      refetchInterval: isAdmin ? 10000 : false,
+      retry: false,
+      onError: () => {
+        localStorage.removeItem("adminToken");
+        setIsAdmin(false);
+      },
+    }
   });
 
   const approveUser = useApproveUser();

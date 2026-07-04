@@ -1,15 +1,13 @@
 import { Router, Request, Response } from "express";
 import crypto from "crypto";
 import { db } from "@workspace/db";
-import { usersTable, sessionsTable } from "@workspace/db";
+import { usersTable, sessionsTable, adminSessionsTable } from "@workspace/db";
 import { eq, desc, and } from "drizzle-orm";
 
 const router = Router();
 
 const ADMIN_PASSWORD = "OMar01018547595&";
 const OWNER_EMAIL = "omareltweel012@gmail.com";
-
-const adminSessions = new Set<string>();
 
 async function getSessionEmail(token: string): Promise<string | null> {
   if (!token) return null;
@@ -20,6 +18,16 @@ async function getSessionEmail(token: string): Promise<string | null> {
     .where(and(eq(sessionsTable.token, token), eq(sessionsTable.isActive, true)))
     .limit(1);
   return rows[0]?.email ?? null;
+}
+
+async function isValidAdminToken(token: string): Promise<boolean> {
+  if (!token) return false;
+  const rows = await db
+    .select({ id: adminSessionsTable.id })
+    .from(adminSessionsTable)
+    .where(eq(adminSessionsTable.token, token))
+    .limit(1);
+  return rows.length > 0;
 }
 
 // POST /api/admin/login
@@ -34,13 +42,14 @@ router.post("/login", async (req: Request, res: Response) => {
     return res.status(403).json({ error: "غير مصرح لهذا الحساب" });
   }
   const token = crypto.randomBytes(32).toString("hex");
-  adminSessions.add(token);
+  await db.insert(adminSessionsTable).values({ token });
   return res.json({ success: true, message: token });
 });
 
 async function requireAdmin(req: Request, res: Response, next: Function) {
   const adminToken = req.headers["x-admin-token"] as string;
-  if (!adminToken || !adminSessions.has(adminToken)) {
+  const valid = await isValidAdminToken(adminToken);
+  if (!valid) {
     return res.status(401).json({ error: "غير مصرح" });
   }
   const sessionToken = req.headers["x-session-token"] as string;
