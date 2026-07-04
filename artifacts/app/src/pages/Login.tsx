@@ -29,9 +29,10 @@ export default function Login() {
       setLocation("/dashboard");
       return;
     }
-    // Device lock check
+    // Device lock check — owner can use any device freely
+    const OWNER_EMAIL = "omareltweel012@gmail.com";
     const storedEmail = localStorage.getItem("userEmail");
-    if (storedEmail) {
+    if (storedEmail && storedEmail.toLowerCase() !== OWNER_EMAIL.toLowerCase()) {
       setLockedEmail(storedEmail);
       setDeviceLocked(true);
     }
@@ -45,8 +46,11 @@ export default function Login() {
     if (!email) return;
 
     // Device lock: if this device was already used with another email, block
+    // Exception: owner email can use any device freely
+    const OWNER_EMAIL = "omareltweel012@gmail.com";
     const storedEmail = localStorage.getItem("userEmail");
-    if (storedEmail && storedEmail.toLowerCase() !== email.toLowerCase()) {
+    const isOwnerLogin = email.toLowerCase() === OWNER_EMAIL.toLowerCase();
+    if (!isOwnerLogin && storedEmail && storedEmail.toLowerCase() !== email.toLowerCase()) {
       setDeviceLocked(true);
       setLockedEmail(storedEmail);
       return;
