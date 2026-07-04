@@ -269,6 +269,102 @@
  * Even without handling focused or not, this is six possible combinations that
  * need to be distinguished from eachother visually.
  */
+/* ── Scary / glitch animations ── */
+@keyframes glitch {
+  0%   { clip-path: inset(40% 0 61% 0); transform: translate(-4px, 0); }
+  20%  { clip-path: inset(92% 0 1% 0);  transform: translate(4px, 0); }
+  40%  { clip-path: inset(43% 0 1% 0);  transform: translate(0, 0); }
+  60%  { clip-path: inset(25% 0 58% 0); transform: translate(3px, 0); }
+  80%  { clip-path: inset(54% 0 7% 0);  transform: translate(-3px, 0); }
+  100% { clip-path: inset(58% 0 43% 0); transform: translate(0, 0); }
+}
+@keyframes glitch2 {
+  0%   { clip-path: inset(24% 0 29% 0); transform: translate(3px, 0); }
+  20%  { clip-path: inset(54% 0 21% 0); transform: translate(-3px, 0); }
+  40%  { clip-path: inset(11% 0 81% 0); transform: translate(0, 0); }
+  60%  { clip-path: inset(60% 0 2% 0);  transform: translate(-2px, 0); }
+  80%  { clip-path: inset(3% 0 70% 0);  transform: translate(2px, 0); }
+  100% { clip-path: inset(76% 0 14% 0); transform: translate(0, 0); }
+}
+@keyframes scanlines {
+  0%   { background-position: 0 0; }
+  100% { background-position: 0 100px; }
+}
+@keyframes flicker {
+  0%,100% { opacity: 1; }
+  92%      { opacity: 1; }
+  93%      { opacity: 0.6; }
+  94%      { opacity: 1; }
+  96%      { opacity: 0.7; }
+  97%      { opacity: 1; }
+}
+@keyframes cursor-blink {
+  0%,100% { opacity: 1; }
+  50%     { opacity: 0; }
+}
+@keyframes neon-pulse {
+  0%,100% { box-shadow: 0 0 10px var(--neon), 0 0 30px var(--neon), 0 0 60px var(--neon); }
+  50%     { box-shadow: 0 0 5px var(--neon), 0 0 15px var(--neon), 0 0 30px var(--neon); }
+}
+@keyframes text-glow {
+  0%,100% { text-shadow: 0 0 10px currentColor, 0 0 30px currentColor; }
+  50%     { text-shadow: 0 0 5px currentColor, 0 0 15px currentColor; }
+}
+@keyframes rise {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes border-spin {
+  to { --angle: 360deg; }
+}
+
+.glitch-text {
+  position: relative;
+  animation: flicker 8s infinite;
+}
+.glitch-text::before,
+.glitch-text::after {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  opacity: 0.8;
+}
+.glitch-text::before {
+  color: #ff003c;
+  animation: glitch 4s infinite linear;
+}
+.glitch-text::after {
+  color: #00cfff;
+  animation: glitch2 4s infinite linear;
+}
+
+.scanline-overlay::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent 3px,
+    rgba(0,0,0,0.15) 3px,
+    rgba(0,0,0,0.15) 4px
+  );
+  pointer-events: none;
+  z-index: 9999;
+  animation: scanlines 8s linear infinite;
+}
+
+.cursor-blink::after {
+  content: "|";
+  animation: cursor-blink 1s step-end infinite;
+  color: #FFB800;
+  margin-right: 2px;
+}
+
+.rise-in {
+  animation: rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
 @layer utilities {
 
   /* Hide ugly search cancel button in Chrome until we can style it properly */
