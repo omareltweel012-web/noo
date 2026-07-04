@@ -203,7 +203,7 @@ export default function Login() {
               <>
                 <h2 className="text-2xl font-bold text-red-400 mb-3">الحساب موقوف</h2>
                 <p className="text-white/60 text-sm mb-4">
-                  برجاء التواصل مع الدعم ودفع اشتراك السيرفر لتفعيل حسابك.
+                  برجاء التواصل مع الدعم لتجديد اشتراك السيرفر.
                 </p>
               </>
             ) : (
