@@ -1,0 +1,8 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "7VLxdjGew0cUrViBi21tk"
+uri = "file://artifacts/app/public/app-logo.png"
+type = "image"
+title = "hooded king logo"
