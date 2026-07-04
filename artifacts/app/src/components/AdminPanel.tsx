@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,17 +21,20 @@ export default function AdminPanel() {
   const isOwner = currentEmail.toLowerCase() === OWNER_EMAIL.toLowerCase();
 
   const adminLogin = useAdminLogin();
-  const { data: users, refetch, isFetching } = useGetAdminUsers({
+  const { data: users, refetch, isFetching, isError } = useGetAdminUsers({
     query: {
       enabled: isAdmin,
-      refetchInterval: isAdmin ? 10000 : false,
+      refetchInterval: isAdmin ? 5000 : false,
       retry: false,
-      onError: () => {
-        localStorage.removeItem("adminToken");
-        setIsAdmin(false);
-      },
     }
   });
+
+  useEffect(() => {
+    if (isError && isAdmin) {
+      localStorage.removeItem("adminToken");
+      setIsAdmin(false);
+    }
+  }, [isError, isAdmin]);
 
   const approveUser = useApproveUser();
   const banUser = useBanUser();
